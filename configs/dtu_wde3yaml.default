@@ -1,10 +1,10 @@
 DATA:
   TRAIN:
-    ROOT_DIR: "data/dtu"
+    ROOT_DIR: "path/to/dtu"
   VAL:
-    ROOT_DIR: "data/dtu"
+    ROOT_DIR: "path/to/dtu"
   TEST:
-    ROOT_DIR: "data/dtu"
+    ROOT_DIR: "/data1/Dataset/dtu"
     NUM_VIEW: 5
     IMG_HEIGHT: 960
     IMG_WIDTH: 1280

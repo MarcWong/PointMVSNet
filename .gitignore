@@ -1,0 +1,7 @@
+configs/dtu_wde3.yaml
+*.pyc
+*.so
+pointmvsnet/functions/build
+*.txt
+!requirements.txt
+outputs/dtu_wde3/*/
