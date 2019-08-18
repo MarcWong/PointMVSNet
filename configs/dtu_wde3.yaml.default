@@ -4,7 +4,7 @@ DATA:
   VAL:
     ROOT_DIR: "path/to/dtu"
   TEST:
-    ROOT_DIR: "/data1/Dataset/dtu"
+    ROOT_DIR: "path/to/dtu"
     NUM_VIEW: 5
     IMG_HEIGHT: 960
     IMG_WIDTH: 1280
