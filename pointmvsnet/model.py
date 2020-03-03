@@ -298,10 +298,11 @@ class PointMVSNet(nn.Module):
                 if isTest:
                     pred_depth_img = torch.detach(pred_depth_img)
                     print("flow: {}".format(i))
+
                 flow = point_flow(pred_depth_img, inter_scale* depth_interval, img_scale, i)
                 preds["flow{}".format(i+1)] = flow
                 pred_depth_img = flow
-
+        # print(preds)
         return preds
 
 

@@ -12,11 +12,11 @@ from pointmvsnet.utils.io import mkdir, write_cam_dtu, write_pfm
 def eval_file_logger(data_batch, preds, ref_img_path, folder):
     l = ref_img_path.split("/")
     eval_folder = "/".join(l[:-3])
-
-    scene = l[-2]
+    # print(l)
+    scene = l[-3]
 
     scene_folder = osp.join(eval_folder, folder, scene)
-
+    print(scene_folder)
     if not osp.isdir(scene_folder):
         mkdir(scene_folder)
         print("**** {} ****".format(scene))

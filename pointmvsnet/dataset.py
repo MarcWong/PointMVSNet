@@ -180,8 +180,8 @@ class DTU_Test_Set(Dataset):
         self.width = width
         self.depth_folder = depth_folder
 
-        self.cluster_file_path = osp.join(root_dir, self.cluster_file_path)
-        self.cluster_list = open(self.cluster_file_path).read().split()
+        # self.cluster_file_path = osp.join(root_dir, self.cluster_file_path)
+        # self.cluster_list = open(self.cluster_file_path).read().split()
         # self.cluster_list =
         assert (dataset_name in ["test"]), "Unknown dataset_name: {}".format(dataset_name)
 
@@ -193,46 +193,38 @@ class DTU_Test_Set(Dataset):
     def _load_dataset(self, dataset, lighting_set):
         path_list = []
         for ind in dataset:
-            image_folder = osp.join(self.root_dir, "Eval/Rectified/scan{}".format(ind))
-            cam_folder = osp.join(self.root_dir, "Cameras")
-            depth_folder = osp.join(self.depth_folder, "scan{}".format(ind))
+            view_image_paths = []
+            view_cam_paths = []
+            view_depth_paths = []
+            data_folder= osp.join(self.root_dir,"dtu_test",'scan{}'.format(ind))
+            paths = {}
+            cam_folder = osp.join(data_folder, "cams")
+            image_folder = osp.join(data_folder,'images')
+            print(data_folder)
+            cluster_list_path = os.path.join(data_folder, 'pair.txt')
+            cluster_list = open(cluster_list_path).read().split()
+            self.mvs_list = []
+            pos = 1
+            for p in range(0, int(cluster_list[0])):
+                ref_index = int(cluster_list[22 * p + 1])
+                ref_image_path = osp.join(image_folder, "%08d.jpg"%ref_index)
+                ref_cam_path = osp.join(cam_folder, "{:08d}_cam.txt".format(ref_index))
 
-            for lighting_ind in lighting_set:
-                # for each reference image
-                for p in range(0, int(self.cluster_list[0])):
-                    paths = {}
-                    # pts_paths = []
-                    view_image_paths = []
-                    view_cam_paths = []
-                    view_depth_paths = []
 
-                    # ref image
-                    ref_index = int(self.cluster_list[22 * p + 1])
-                    ref_image_path = osp.join(
-                        image_folder, "rect_{:03d}_{}_r5000.png".format(ref_index + 1, lighting_ind))
-                    ref_cam_path = osp.join(cam_folder, "{:08d}_cam.txt".format(ref_index))
-                    ref_depth_path = osp.join(depth_folder, "depth_map_{:04d}.pfm".format(ref_index))
+                view_image_paths.append(ref_image_path)
+                view_cam_paths.append(ref_cam_path)
 
-                    view_image_paths.append(ref_image_path)
-                    view_cam_paths.append(ref_cam_path)
-                    view_depth_paths.append(ref_depth_path)
-
-                    # view images
-                    for view in range(self.num_view - 1):
-                        view_index = int(self.cluster_list[22 * p + 2 * view + 3])
-                        view_image_path = osp.join(
-                            image_folder, "rect_{:03d}_{}_r5000.png".format(view_index + 1, lighting_ind))
-                        view_cam_path = osp.join(cam_folder, "{:08d}_cam.txt".format(view_index))
-                        view_depth_path = osp.join(depth_folder, "depth_map_{:04d}.pfm".format(view_index))
-                        view_image_paths.append(view_image_path)
-                        view_cam_paths.append(view_cam_path)
-                        view_depth_paths.append(view_depth_path)
-                    paths["view_image_paths"] = view_image_paths
-                    paths["view_cam_paths"] = view_cam_paths
-                    paths["view_depth_paths"] = view_depth_paths
-
-                    path_list.append(paths)
-
+                # view images
+                for view in range(self.num_view - 1):
+                    view_index = int(cluster_list[22 * p + 2 * view + 3])
+                    view_image_path = osp.join(image_folder, "%08d.jpg"%view_index)
+                    view_cam_path = osp.join(cam_folder, "{:08d}_cam.txt".format(view_index))
+                    view_image_paths.append(view_image_path)
+                    view_cam_paths.append(view_cam_path)
+                paths["view_image_paths"] = view_image_paths
+                paths["view_cam_paths"] = view_cam_paths
+                paths["view_depth_paths"] = view_depth_paths
+                path_list.append(paths)
         return path_list
 
     def __getitem__(self, index):
@@ -264,7 +256,7 @@ class DTU_Test_Set(Dataset):
             for depth_path in paths["view_depth_paths"]:
                 depth_images.append(np.zeros((self.height, self.width), np.float))
 
-        ref_depth = depth_images[0].copy()
+        # ref_depth = depth_images[0].copy()
 
         h_scale = float(self.height) / images[0].shape[0]
         w_scale = float(self.width) / images[0].shape[1]
@@ -274,32 +266,32 @@ class DTU_Test_Set(Dataset):
         resize_scale = h_scale
         if w_scale > h_scale:
             resize_scale = w_scale
-        scaled_input_images, scaled_input_cams, ref_depth = scale_dtu_input(images, cams, depth_image=ref_depth,
+        scaled_input_images, scaled_input_cams = scale_dtu_input(images, cams, depth_image=None,
                                                                             scale=resize_scale)
 
         # crop to fit network
-        croped_images, croped_cams, ref_depth = crop_dtu_input(scaled_input_images, scaled_input_cams,
+        croped_images, croped_cams = crop_dtu_input(scaled_input_images, scaled_input_cams,
                                                                height=self.height, width=self.width,
                                                                base_image_size=self.base_image_size,
-                                                               depth_image=ref_depth)
+                                                               depth_image=None)
         ref_image = croped_images[0].copy()
         for i, image in enumerate(croped_images):
             croped_images[i] = norm_image(image)
 
-        depth_list = np.stack(depth_images, axis=0)
+        # depth_list = np.stack(depth_images, axis=0)
         img_list = np.stack(croped_images, axis=0)
         cam_params_list = np.stack(croped_cams, axis=0)
         # cam_pos_list = np.stack(camspos, axis=0)
 
         img_list = torch.tensor(img_list).permute(0, 3, 1, 2).float()
         cam_params_list = torch.tensor(cam_params_list).float()
-        depth_list = torch.tensor(depth_list).unsqueeze(-1).permute(0, 3, 1, 2).float()
+        # depth_list = torch.tensor(depth_list).unsqueeze(-1).permute(0, 3, 1, 2).float()
 
         return {
             "img_list": img_list,
             "cam_params_list": cam_params_list,
-            "gt_depth_img": ref_depth,
-            "depth_list": depth_list,
+            # "gt_depth_img": ref_depth,
+            # "depth_list": depth_list,
             "ref_img_path": paths["view_image_paths"][0],
             "ref_img": ref_image,
             "mean": self.mean,
@@ -336,6 +328,7 @@ def build_data_loader(cfg, mode="train"):
             width=cfg.DATA.TEST.IMG_WIDTH,
             interval_scale=cfg.DATA.TEST.INTER_SCALE,
             num_virtual_plane=cfg.DATA.TEST.NUM_VIRTUAL_PLANE,
+
         )
     else:
         raise ValueError("Unknown mode: {}.".format(mode))
@@ -353,3 +346,5 @@ def build_data_loader(cfg, mode="train"):
     )
 
     return data_loader
+
+

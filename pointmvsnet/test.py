@@ -17,7 +17,9 @@ from pointmvsnet.utils.checkpoint import Checkpointer
 from pointmvsnet.dataset import build_data_loader
 from pointmvsnet.utils.metric_logger import MetricLogger
 from pointmvsnet.utils.eval_file_logger import eval_file_logger
-
+import os
+os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
 def parse_args():
     parser = argparse.ArgumentParser(description="PyTorch Point-MVSNet Evaluation")
@@ -55,19 +57,22 @@ def test_model(model,
                ):
     logger = logging.getLogger("pointmvsnet.train")
     meters = MetricLogger(delimiter="  ")
-    model.train()
+    model.eval()
     end = time.time()
     total_iteration = data_loader.__len__()
     path_list = []
     with torch.no_grad():
         for iteration, data_batch in enumerate(data_loader):
+
+            # print(data_batch["img_list"].shape)
             data_time = time.time() - end
             curr_ref_img_path = data_batch["ref_img_path"][0]
             path_list.extend(curr_ref_img_path)
             if not isCPU:
                 data_batch = {k: v.cuda(non_blocking=True) for k, v in data_batch.items() if isinstance(v, torch.Tensor)}
-            preds = model(data_batch, image_scales, inter_scales, isFlow=True, isTest=True)
-
+            # print(data_batch,image_scales,inter_scales)
+            preds=model.forward(data_batch, image_scales, inter_scales, isFlow=True, isTest=True)
+            # print("he")
             batch_time = time.time() - end
             end = time.time()
             meters.update(time=batch_time, data=data_time)
